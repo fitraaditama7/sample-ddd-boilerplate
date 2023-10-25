@@ -1,0 +1,56 @@
+basePath: /
+definitions:
+  responses.ResponseData:
+    properties:
+      response_code:
+        type: string
+      response_message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a API docs for new simobi+.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: New Simobi+ API
+  version: "2.0"
+paths:
+  /sample/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get sample data by id
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.ResponseData'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.ResponseData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseData'
+      summary: Get sample by id
+      tags:
+      - Sample
+schemes:
+- http
+- https
+swagger: "2.0"

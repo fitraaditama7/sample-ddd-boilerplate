@@ -1,0 +1,85 @@
+version: '3.7'
+services:
+    oracledb:
+        image: gvenzl/oracle-xe:11
+        container_name: "bsim-oracledb"
+        restart: always
+        environment:
+            ORACLE_PASSWORD: MYSQL_PASSWORD
+        ports:
+            - 1522:1521
+        volumes:
+            - ./var/docker/volumes/oracle/oradata:/var/lib/oracle/oradata
+    redis:
+        image: redis:alpine
+        container_name: "bsim-redis"
+        restart: always
+        ports: 
+            - "6379:6379"
+    elasticsearch:
+      container_name: bsim-elasticsearch
+      hostname: elasticsearch
+      image: "docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}"
+      environment:
+        - cluster.name=es-cluster
+        - node.name=es-node-1
+        - path.data=/usr/share/elasticsearch/data
+        - http.port=9200
+        - http.host=0.0.0.0
+        - transport.host=127.0.0.1
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms${ES_JVM_HEAP} -Xmx${ES_JVM_HEAP}"
+      mem_limit: ${ES_MEM_LIMIT}
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      volumes:
+        - ./var/docker/volumes/elasticsearch/data:/var/lib/elasticsearch/data
+      ports:
+        - '9200:9200'
+      networks:
+        - 'elk_stack'
+      healthcheck:
+        test: ["CMD", "curl","-s" ,"-f", "-u", "elastic:${ES_PASSWORD}", "http://localhost:9200/_cat/health"]
+    kibana:
+      container_name: bsim-kibana
+      hostname: kibana
+      image: "docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}"
+      environment:
+        - "ELASTICSEARCH_PASSWORD=${ES_PASSWORD}"
+        - server.port=127.0.0.1:5601
+        - elasticsearch.url="http://elasticsearch:9200"
+        - server.name="kibana"
+      ports:
+        - '5601:5601'
+      healthcheck:
+            test: ["CMD", "curl", "-s", "-f", "http://localhost:5601/login"]
+            retries: 6
+      networks:
+        - 'elk_stack'
+      depends_on:
+        - 'elasticsearch'
+    configure_stack:
+      container_name: bsim-configure_stack
+      image: docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION}
+      environment:
+        - 'ELASTIC_VERSION=${ELASTIC_VERSION}'
+        - 'ES_PASSWORD=${ES_PASSWORD}'
+        - 'ES_DEFAULT_INDEX_PATTERN=${ES_DEFAULT_INDEX_PATTERN}'
+      volumes:
+        - './init/configure-stack.sh:/usr/local/bin/configure-stack.sh:ro'
+      command: ['/bin/bash', '-c', 'cat /usr/local/bin/configure-stack.sh | tr -d "\r" | bash']
+      networks:
+        - 'elk_stack'
+      depends_on:
+        - 'elasticsearch'
+        - 'kibana'
+networks:
+  elk_stack:
+      driver: bridge
+      ipam:
+        driver: default
+        config:
+
+        - subnet: 192.168.1.0/24
