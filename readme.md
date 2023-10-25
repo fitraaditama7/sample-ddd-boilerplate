@@ -27,7 +27,7 @@ Provide step-by-step instructions on how to install or set up your project. For 
 
 1. Clone the repository
    ```bash
-   git clone ssh://git@gitlab.banksinarmas.com:1022/digital-banking/backend/personal-banking.git && cd sample-ddd-boilerplate
+   git clone git@github.com:fitraaditama7/sample-ddd-boilerplate.git
 
 2. Install golang package
     ```bash
